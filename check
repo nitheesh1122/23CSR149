@@ -1,0 +1,225 @@
+env 
+
+ACCESS_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiYXVkIjoiaHR0cDovLzIwLjI0NC41Ni4xNDQvZXZhbHVhdGlvbi1zZXJ2aWNlIiwiZW1haWwiOiJuaXRoZWVzaHMuMjNjc2VAa29uZ3UuZWR1IiwiZXhwIjoxNzc5MDg0MTI5LCJpYXQiOjE3NzkwODMyMjksImlzcyI6IkFmZm9yZCBNZWRpY2FsIFRlY2hub2xvZ2llcyBQcml2YXRlIExpbWl0ZWQiLCJqdGkiOiJjNmNiZTBlMi0xODg0LTQzZmMtODgxYS1mYzg5M2QxNGYyYzgiLCJsb2NhbGUiOiJlbi1JTiIsIm5hbWUiOiJuaXRoZWVzaCBzIiwic3ViIjoiNDIxMjg0OTAtZTlhZC00NTRhLThiNTItNjEyNzZkN2VkM2JiIn0sImVtYWlsIjoibml0aGVlc2hzLjIzY3NlQGtvbmd1LmVkdSIsIm5hbWUiOiJuaXRoZWVzaCBzIiwicm9sbE5vIjoiMjNjc3IxNDkiLCJhY2Nlc3NDb2RlIjoiUnlaQmN5IiwiY2xpZW50SUQiOiI0MjEyODQ5MC1lOWFkLTQ1NGEtOGI1Mi02MTI3NmQ3ZWQzYmIiLCJjbGllbnRTZWNyZXQiOiJXR1Rxa1RYR1FnRkNKeUp0In0.kK9ntro3RBxG8Uo-5AUmEkTqbldH7JkizsPToVp8yrA
+    
+server
+
+const app = require("./app");
+
+const PORT = 3000;
+
+app.listen(PORT, () => {
+    console.log("Server started");
+});
+
+auth
+
+
+require("dotenv").config();
+
+const token =
+process.env.ACCESS_TOKEN;
+
+module.exports = token;
+
+
+vehivleservice
+const axios = require("axios");
+
+const token =
+require("../config/auth");
+
+const BASE_URL =
+"http://4.224.186.213/evaluation-service";
+
+async function fetchDepots() {
+
+    const response = await axios.get(
+        `${BASE_URL}/depots`,
+        {
+            headers: {
+                Authorization:
+                `Bearer ${token}`
+            }
+        }
+    );
+
+    return response.data;
+}
+
+async function fetchVehicles() {
+
+    const response = await axios.get(
+        `${BASE_URL}/vehicles`,
+        {
+            headers: {
+                Authorization:
+                `Bearer ${token}`
+            }
+        }
+    );
+
+    return response.data;
+}
+
+module.exports = {
+    fetchDepots,
+    fetchVehicles
+};
+logger
+
+
+const axios = require("axios");
+
+const token =
+require("../config/auth");
+
+const BASE_URL =
+"http://4.224.186.213/evaluation-service";
+
+async function Log(
+    stack,
+    level,
+    packageName,
+    message
+) {
+
+    try {
+
+        await axios.post(
+            `${BASE_URL}/logs`,
+            {
+                stack,
+                level,
+                package: packageName,
+                message
+            },
+            {
+                headers: {
+                    Authorization:
+                    `Bearer ${token}`
+                }
+            }
+        );
+
+    } catch (error) {
+
+        console.log("Logging failed");
+
+    }
+}
+
+module.exports = Log;
+
+
+
+schedule controller 
+const {
+    fetchDepots,
+    fetchVehicles
+} = require("../services/vehicleservice");
+
+const maximizeImpact =
+require("../utils/knapsack");
+
+const Log =
+require("../middleware/logger");
+
+async function getSchedule(req, res) {
+
+    try {
+
+        await Log(
+            "backend",
+            "info",
+            "controller",
+            "Fetching optimized schedule"
+        );
+
+        const depotData =
+        await fetchDepots();
+
+        const vehicleData =
+        await fetchVehicles();
+
+        const depots =
+        depotData.depots;
+
+        const vehicles =
+        vehicleData.vehicles;
+
+        const result = [];
+
+        for (const depot of depots) {
+
+            const bestImpact =
+            maximizeImpact(
+                vehicles,
+                depot.MechanicHours
+            );
+
+            result.push({
+                depotId: depot.ID,
+                maximumImpact:
+                bestImpact
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+
+        await Log(
+            "backend",
+            "error",
+            "controller",
+            error.message
+        );
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+}
+
+module.exports = {
+    getSchedule
+};
+schedule routes 
+
+
+const express = require("express");
+
+const {
+    getSchedule
+} = require(
+    "../controllers/scheduleController"
+);
+
+const router = express.Router();
+
+router.get("/", getSchedule);
+
+module.exports = router;
+
+app.js 
+const express = require("express");
+const cors = require("cors");
+
+const scheduleRoutes =
+require("./routes/scheduleroutes");
+
+const app = express();
+
+app.use(cors());
+
+app.use(express.json());
+
+app.use("/schedule", scheduleRoutes);
+
+module.exports = app;
