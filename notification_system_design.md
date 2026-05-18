@@ -271,3 +271,130 @@ This helps identify issues quickly.
 ## Conclusion
 
 Using WebSockets, Redis, queue systems, and database optimization can help build a scalable notification system that can handle large numbers of users efficiently.
+
+
+
+# Stage 3
+
+## Database Query Optimization
+
+As the number of notifications increases, database queries can become slower. So proper optimization techniques are needed to improve performance.
+
+---
+
+## Problem in Large Systems
+
+If millions of notifications are stored in a single table, fetching unread notifications for users can become slow.
+
+Example query:
+
+```sql
+SELECT * FROM notifications
+WHERE user_id = 'USR101'
+AND is_read = false;
+```
+
+Without optimization, this query may scan a large number of rows.
+
+---
+
+## Using Indexes
+
+Indexes can improve query performance significantly.
+
+Example:
+
+```sql
+CREATE INDEX idx_user_read
+ON notifications(user_id, is_read);
+```
+
+This helps the database quickly find unread notifications for a particular user.
+
+---
+
+## Benefits of Indexing
+
+- Faster search operations
+- Reduced query execution time
+- Improved performance for large datasets
+
+---
+
+## Pagination
+
+Instead of loading all notifications at once, pagination should be used.
+
+Example:
+
+```sql
+SELECT * FROM notifications
+WHERE user_id = 'USR101'
+LIMIT 20 OFFSET 0;
+```
+
+Benefits:
+
+- Reduced response size
+- Faster API response
+- Better frontend performance
+
+---
+
+## Archiving Old Notifications
+
+Old notifications can be moved to archive tables after a certain period.
+
+Advantages:
+
+- Smaller active tables
+- Faster queries
+- Easier maintenance
+
+---
+
+## Read Replicas
+
+For systems with large traffic, read replicas can be used.
+
+Main database handles write operations while replica databases handle read operations.
+
+This reduces load on the primary database.
+
+---
+
+## Caching Frequently Used Data
+
+Redis cache can store:
+
+- unread notification counts
+- recently fetched notifications
+- active user sessions
+
+This reduces repeated database queries.
+
+---
+
+## Query Optimization
+
+Queries should only fetch required fields instead of using:
+
+```sql
+SELECT *
+```
+
+Better approach:
+
+```sql
+SELECT id, title, message
+FROM notifications
+WHERE user_id = 'USR101';
+```
+
+This reduces unnecessary data transfer.
+
+---
+
+## Conclusion
+
+Using indexing, pagination, caching, query optimization, and database scaling techniques can improve notification system performance and handle large amounts of data efficiently.

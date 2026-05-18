@@ -15,28 +15,34 @@ async function Log(
 
     try {
 
-        await axios.post(
+        const response = await axios.post(
             `${BASE_URL}/logs`,
             {
-                stack,
-                level,
+                stack: stack,
+                level: level,
                 package: packageName,
-                message
+                message: message
             },
             {
                 headers: {
                     Authorization:
-                    `Bearer ${token}`
+                    `Bearer ${token}`,
+                    "Content-Type":
+                    "application/json"
                 }
             }
+        );
+
+        console.log(
+            "Log created successfully"
         );
 
     } catch (error) {
 
         console.log(
-    error.response?.data ||
-    error.message
-);
+            error.response?.data ||
+            error.message
+        );
 
     }
 }
