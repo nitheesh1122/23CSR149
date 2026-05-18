@@ -1,7 +1,7 @@
 const {
     fetchDepots,
     fetchVehicles
-} = require("../services/vehicleService");
+} = require("../services/vehicleservice");
 
 const maximizeImpact =
 require("../utils/knapsack");

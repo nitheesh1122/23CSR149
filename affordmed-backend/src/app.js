@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 
 const scheduleRoutes =
-require("./routes/scheduleRoutes");
+require("./routes/scheduleroutes");
 
 const app = express();
 
